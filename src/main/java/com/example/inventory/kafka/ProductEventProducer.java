@@ -6,10 +6,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class ProductEventProducer {
 
-    private final KafkaTemplate<String, ProductEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public ProductEventProducer(
-            KafkaTemplate<String, ProductEvent> kafkaTemplate) {
+            KafkaTemplate<String, Object> kafkaTemplate) {
+
         this.kafkaTemplate = kafkaTemplate;
     }
 

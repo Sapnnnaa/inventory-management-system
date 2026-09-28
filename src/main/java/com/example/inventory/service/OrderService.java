@@ -17,6 +17,9 @@ import com.example.inventory.exception.InventoryNotFoundException;
 import com.example.inventory.exception.OrderNotFoundException;
 import com.example.inventory.exception.ProductNotFoundException;
 import com.example.inventory.exception.WarehouseNotFoundException;
+import com.example.inventory.kafka.OrderCreatedEvent;
+import com.example.inventory.kafka.OrderEventProducer;
+import com.example.inventory.kafka.OrderItemEvent;
 import com.example.inventory.repository.InventoryRepository;
 import com.example.inventory.repository.OrderRepository;
 import com.example.inventory.repository.ProductRepository;
@@ -35,17 +38,20 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final WarehouseRepository warehouseRepository;
     private final InventoryRepository inventoryRepository;
+    private final OrderEventProducer orderEventProducer;
 
     public OrderService(
             OrderRepository orderRepository,
             ProductRepository productRepository,
             WarehouseRepository warehouseRepository,
-            InventoryRepository inventoryRepository) {
+            InventoryRepository inventoryRepository,
+            OrderEventProducer orderEventProducer) {
 
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.warehouseRepository = warehouseRepository;
         this.inventoryRepository = inventoryRepository;
+        this.orderEventProducer = orderEventProducer;
     }
 
     // =========================================================
@@ -158,7 +164,31 @@ public class OrderService {
         // 5. Save order
         Order savedOrder = orderRepository.save(order);
 
-        // 6. Convert entity to response DTO
+        // 6. Create Kafka
+        List<OrderItemEvent> itemEvents =
+                savedOrder.getItems()
+                        .stream()
+                        .map(item ->
+                                new OrderItemEvent(
+                                        item.getProduct().getId(),
+                                        item.getQuantity()
+                                )
+                        )
+                        .toList();
+
+        OrderCreatedEvent event =
+                new OrderCreatedEvent(
+                        savedOrder.getId(),
+                        savedOrder.getCustomerName(),
+                        warehouse.getId(),
+                        savedOrder.getTotalAmount(),
+                        itemEvents
+                );
+
+        // 7. Send event to Kafka
+        orderEventProducer.sendOrderCreatedEvent(event);
+
+        // 8. Convert entity to response DTO
         return convertToOrderResponse(savedOrder);
     }
 
