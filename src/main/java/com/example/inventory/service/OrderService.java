@@ -5,12 +5,7 @@ import com.example.inventory.dto.OrderItemResponse;
 import com.example.inventory.dto.OrderRequest;
 import com.example.inventory.dto.OrderResponse;
 import com.example.inventory.dto.OrderStatusRequest;
-import com.example.inventory.entity.Inventory;
-import com.example.inventory.entity.Order;
-import com.example.inventory.entity.OrderItem;
-import com.example.inventory.entity.OrderStatus;
-import com.example.inventory.entity.Product;
-import com.example.inventory.entity.Warehouse;
+import com.example.inventory.entity.*;
 import com.example.inventory.exception.InsufficientStockException;
 import com.example.inventory.exception.InvalidOrderStatusException;
 import com.example.inventory.exception.InventoryNotFoundException;
@@ -18,12 +13,10 @@ import com.example.inventory.exception.OrderNotFoundException;
 import com.example.inventory.exception.ProductNotFoundException;
 import com.example.inventory.exception.WarehouseNotFoundException;
 import com.example.inventory.kafka.OrderCreatedEvent;
-import com.example.inventory.kafka.OrderEventProducer;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.inventory.kafka.OrderItemEvent;
-import com.example.inventory.repository.InventoryRepository;
-import com.example.inventory.repository.OrderRepository;
-import com.example.inventory.repository.ProductRepository;
-import com.example.inventory.repository.WarehouseRepository;
+import com.example.inventory.repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -38,20 +31,23 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final WarehouseRepository warehouseRepository;
     private final InventoryRepository inventoryRepository;
-    private final OrderEventProducer orderEventProducer;
+    private final OutboxEventRepository outboxEventRepository;
+    private final ObjectMapper objectMapper;
 
     public OrderService(
             OrderRepository orderRepository,
             ProductRepository productRepository,
             WarehouseRepository warehouseRepository,
             InventoryRepository inventoryRepository,
-            OrderEventProducer orderEventProducer) {
+            OutboxEventRepository outboxEventRepository,
+            ObjectMapper objectMapper) {
 
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.warehouseRepository = warehouseRepository;
         this.inventoryRepository = inventoryRepository;
-        this.orderEventProducer = orderEventProducer;
+        this.outboxEventRepository = outboxEventRepository;
+        this.objectMapper = objectMapper;
     }
 
     // =========================================================
@@ -185,10 +181,45 @@ public class OrderService {
                         itemEvents
                 );
 
-        // 7. Send event to Kafka
-        orderEventProducer.sendOrderCreatedEvent(event);
+        // 7. Convert event to JSON
+        String payload;
 
-        // 8. Convert entity to response DTO
+        try {
+            payload = objectMapper.writeValueAsString(event);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(
+                    "Failed to serialize order event",
+                    e
+            );
+        }
+
+        // 8. Create Outbox Event
+        OutboxEvent outboxEvent = new OutboxEvent();
+
+        outboxEvent.setEventId(
+                "ORDER-" + savedOrder.getId()
+        );
+
+        outboxEvent.setEventType(
+                "ORDER_CREATED"
+        );
+
+        outboxEvent.setTopic(
+                "order-created"
+        );
+
+        outboxEvent.setPayload(payload);
+
+        outboxEvent.setCreatedAt(
+                LocalDateTime.now()
+        );
+
+        outboxEvent.setPublished(false);
+
+        // 9. Save Outbox Event
+        outboxEventRepository.save(outboxEvent);
+
+        // 10. Convert entity to response DTO
         return convertToOrderResponse(savedOrder);
     }
 

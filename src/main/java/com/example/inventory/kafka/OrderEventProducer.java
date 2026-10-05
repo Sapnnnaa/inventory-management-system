@@ -1,8 +1,10 @@
 package com.example.inventory.kafka;
 
-import com.example.inventory.entity.Order;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class OrderEventProducer {
@@ -12,21 +14,18 @@ public class OrderEventProducer {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public OrderEventProducer(
-            KafkaTemplate<String , Object> kafkaTemplate) {
+            KafkaTemplate<String, Object> kafkaTemplate) {
 
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void sendOrderCreatedEvent(OrderCreatedEvent event) {
+    public CompletableFuture<SendResult<String, Object>>
+    sendOrderCreatedEvent(OrderCreatedEvent event) {
 
-        kafkaTemplate.send(
+        return kafkaTemplate.send(
                 TOPIC,
                 event.getOrderId().toString(),
                 event
-        );
-
-        System.out.println(
-                "Order event sent to Kafka: " + event.getOrderId()
         );
     }
 }
