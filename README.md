@@ -1,412 +1,284 @@
-# Inventory & Order Management System
+# IntelliStock AI — AI-Powered Inventory & Order Management System
 
-A backend application built with **Java and Spring Boot** for managing products, warehouses, inventory, and customer orders.
+A production-style backend learning project built using **Java 21 and Spring Boot**, featuring product management, warehouse inventory, order processing, Redis caching, Apache Kafka event-driven communication, and an AI-powered inventory assistant using Spring AI and Ollama.
 
-The project demonstrates real-world backend concepts including **REST APIs, PostgreSQL, Spring Data JPA, transactions, stock reservation, Redis caching, Apache Kafka event-driven communication, Docker, and JWT-based authentication**.
+The project focuses on practical backend engineering concepts, including REST API development, transaction management, inventory analysis, asynchronous event processing, and AI tool calling.
+
+## 🚀 Key Features
+
+### 📦 Product Management
+- Create, retrieve, update, and delete products.
+- Search products using product information.
+- Manage product names, SKUs, descriptions, and prices.
+
+### 🏭 Warehouse & Inventory Management
+- Manage warehouses and product stock.
+- Track inventory across warehouse locations.
+- Reserve stock for customer orders.
+- Validate available inventory before order processing.
+- Handle insufficient-stock scenarios.
+
+### 🛒 Order Management
+- Create customer orders with multiple items.
+- Calculate order totals.
+- Manage order statuses.
+- Reserve inventory during order processing.
+- Use transactional business logic to maintain data consistency.
+
+### 🤖 AI-Powered Inventory Assistant
+Built with **Spring AI, Ollama, and Qwen 2.5 (7B)**.
+
+The AI assistant interacts with existing Java application services through Spring AI tool calling.
+
+Features include:
+- **Product information lookup:** Retrieve product information such as name, SKU, description, and price.
+- **Inventory replenishment recommendations:** Use existing Java business logic to help identify products that need replenishment.
+- **At-risk inventory analysis:** Analyze inventory records using configured lead-time and safety-stock thresholds.
+- **Natural-language interaction:** Ask inventory-related questions through the AI chat API.
+- **Java tool integration:** Allow the AI model to invoke application-defined tools rather than relying only on information in the model.
+
+**AI API endpoint:**
+
+`POST /api/ai/chat`
+
+**AI architecture:**
+
+```text
+User Question
+     |
+     v
+Spring Boot AI Controller
+     |
+     v
+Spring AI
+     |
+     v
+Ollama - Qwen 2.5 (7B)
+     |
+     v
+Tool Calling (@Tool)
+     |
+     v
+Existing Java Services
+     |
+     v
+Product / Inventory Data
+     |
+     v
+AI-Generated Response
+```
+
+The AI assistant uses Java services to retrieve and analyze application data. Business calculations and inventory rules remain in the backend, helping keep inventory decisions grounded in actual application data.
+
+### ⚡ Redis Caching
+- Cache frequently accessed product data.
+- Reduce repeated database queries.
+- Configure Redis serialization and cache expiration.
+
+### 📨 Apache Kafka
+- Publish and consume application events.
+- Explore asynchronous, event-driven communication.
+- Work with Kafka topics, producers, consumers, and consumer groups.
+- Configure retry and dead-letter topic handling.
+
+### 🔐 Security
+- Spring Security integration.
+- Password hashing using BCrypt.
+- Authentication development with login and registration APIs.
+- JWT-based authentication integration.
+
+### 📚 API Documentation
+- Swagger UI and OpenAPI documentation.
+- Test REST endpoints interactively.
+
+### 🧪 Testing
+- Unit tests for product, order, and inventory services.
+- Practice testing business logic and service-layer behavior.
+
+### 🐳 Containerization
+- Docker-based local infrastructure for supporting services such as Kafka.
 
 ---
 
-## 🚀 Features
+## 🛠️ Technology Stack
 
-* Product management
+| Technology | Purpose |
+|---|---|
+| Java 21 | Backend programming |
+| Spring Boot | Application framework |
+| Spring MVC | REST API development |
+| Spring AI | AI integration and tool calling |
+| Ollama | Local AI model runtime |
+| Qwen 2.5 (7B) | Language model |
+| Spring Data JPA | Database access |
+| Hibernate | Object-relational mapping |
+| PostgreSQL | Relational database |
+| Redis | Caching |
+| Apache Kafka | Event-driven communication |
+| Spring Security | Application security |
+| JWT | Token-based authentication |
+| Docker | Containerized infrastructure |
+| Maven | Dependency management and builds |
+| Swagger / OpenAPI | API documentation |
+| JUnit / Mockito | Service-layer testing |
+| Git / GitHub | Version control |
 
-  * Create product
-  * Get product
-  * Update product
-  * Delete product
-  * Search products
+## 🏗️ Application Architecture
 
-* Warehouse management
+The Inventory & Order Management System follows a layered architecture built with Spring Boot. It integrates PostgreSQL for persistent storage, Redis for caching, Apache Kafka for event-driven communication, and Spring AI with Ollama for AI-powered inventory assistance.
 
-  * Create and manage warehouses
-  * Associate inventory with warehouses
+### High-Level Architecture
 
-* Inventory management
+```mermaid
+flowchart TB
+    Client["Client / Postman / Swagger"]
 
-  * Track product stock
-  * Check stock availability
-  * Reserve stock
-  * Prevent insufficient-stock orders
+    subgraph App["Spring Boot Application"]
+        Security["Spring Security / JWT"]
+        Controllers["REST Controllers"]
+        Services["Service Layer"]
+        Repositories["Spring Data JPA Repositories"]
 
-* Order management
+        AIController["AI Chat Controller"]
+        SpringAI["Spring AI"]
+        Tools["AI Tools / Java Business Logic"]
 
-  * Create customer orders
-  * Calculate order totals
-  * Manage order status
-  * Reserve inventory during order processing
+        Producers["Kafka Producers"]
+        Consumers["Kafka Consumers"]
+    end
 
-* Database transactions
+    DB[("PostgreSQL")]
+    Redis[("Redis Cache")]
+    Kafka[("Apache Kafka")]
+    Ollama["Ollama - Qwen 2.5 (7B)"]
 
-  * `@Transactional` used for business operations
-  * Maintains consistency between orders and inventory
+    Client --> Security
+    Security --> Controllers
+    Controllers --> Services
+    Services --> Repositories
+    Repositories --> DB
+    Services <--> Redis
 
-* Redis caching
+    Client --> AIController
+    AIController --> SpringAI
+    SpringAI <--> Ollama
+    SpringAI --> Tools
+    Tools --> Services
 
-  * Caches frequently accessed product data
-  * Reduces repeated database queries
-
-* Apache Kafka
-
-  * Publishes product and order events
-  * Consumes events asynchronously
-  * Demonstrates event-driven architecture
-  * Retry and Dead Letter Topic (DLT) handling
-
-* Authentication and Security
-
-  * User registration
-  * Login
-  * Password encryption using BCrypt
-  * JWT-based authentication
-  * Protected REST APIs
-
-* API documentation
-
-  * Swagger / OpenAPI
-
-* Docker
-
-  * Kafka and supporting infrastructure run using Docker
-
----
-
-## 🛠️ Technologies Used
-
-| Technology        | Purpose                          |
-| ----------------- | -------------------------------- |
-| Java 21           | Backend programming              |
-| Spring Boot       | Application framework            |
-| Spring MVC        | REST API development             |
-| Spring Data JPA   | Database interaction             |
-| Hibernate         | ORM                              |
-| PostgreSQL        | Relational database              |
-| Spring Security   | Authentication and authorization |
-| JWT               | Stateless authentication         |
-| Redis             | Caching                          |
-| Apache Kafka      | Event-driven communication       |
-| Docker            | Containerization                 |
-| Maven             | Build and dependency management  |
-| Swagger / OpenAPI | API documentation                |
-| Postman           | API testing                      |
-| Git / GitHub      | Version control                  |
-
----
-
-## 🏗️ Architecture
-
-The application follows a layered backend architecture:
-
-```text
-Client / Postman / Swagger
-          |
-          v
-     Controller Layer
-          |
-          v
-      Service Layer
-          |
-          v
-    Repository Layer
-          |
-          v
-      PostgreSQL
+    Services --> Producers
+    Producers --> Kafka
+    Kafka --> Consumers
+    Consumers --> Services
 ```
 
-Additional infrastructure:
+### Component Responsibilities
 
-```text
-                 ┌──────────────┐
-                 │   Client     │
-                 └──────┬───────┘
-                        |
-                        v
-              ┌──────────────────┐
-              │ Spring Boot API  │
-              └────────┬─────────┘
-                       |
-          ┌────────────┼────────────┐
-          |            |            |
-          v            v            v
-     PostgreSQL      Redis        Kafka
-          |            |            |
-          |            |            v
-          |            |       Event Consumers
-          |            |
-          |            v
-          |       Cached Data
-          |
-          v
-      Business Data
-```
+| Component | Responsibility |
+|---|---|
+| REST Controllers | Receive HTTP requests and return responses |
+| Spring Security / JWT | Protect endpoints and authenticate requests |
+| Service Layer | Implement product, inventory, and order business logic |
+| Spring Data JPA | Access and persist application data |
+| PostgreSQL | Store products, warehouses, inventory, orders, and users |
+| Redis | Cache selected frequently accessed data |
+| Kafka | Support asynchronous event communication |
+| Spring AI | Connect the chat endpoint to the language model and Java tools |
+| Ollama | Run the configured local Qwen language model |
 
----
+### Request Flow
 
-## 📦 Main Modules
-
-### Product
-
-Responsible for managing product information.
-
-Example:
-
-```text
-Product
- ├── id
- ├── name
- ├── sku
- ├── description
- └── price
-```
-
-### Warehouse
-
-Manages warehouse information.
-
-Example:
-
-```text
-Warehouse
- ├── id
- ├── name
- └── code
-```
-
-### Inventory
-
-Tracks the quantity of products available in each warehouse.
-
-Example:
-
-```text
-Inventory
- ├── product
- ├── warehouse
- ├── quantity
- └── reservedQuantity
-```
-
-### Order
-
-Handles customer orders and order items.
-
-The order process includes:
-
-```text
-Create Order
-     ↓
-Validate Product
-     ↓
-Check Warehouse
-     ↓
-Check Inventory
-     ↓
-Check Available Stock
-     ↓
-Reserve Stock
-     ↓
-Create Order
-     ↓
-Publish Event
-```
-
----
-
-## 🔐 Authentication Flow
-
-The application uses Spring Security and JWT.
-
-```text
-Register
-   ↓
-Password encoded using BCrypt
-   ↓
-User saved in PostgreSQL
-```
-
-Login:
-
-```text
-Login Request
-     ↓
-Validate Username
-     ↓
-Validate Password
-     ↓
-Generate JWT
-     ↓
-Return JWT to Client
-```
-
-For protected APIs:
+**Normal REST API request**
 
 ```text
 Client
-  |
-  | Authorization: Bearer <JWT>
-  v
-JWT Filter
-  |
-  v
-Validate Token
-  |
-  v
-Authenticate User
-  |
-  v
-Controller
+  → Controller
+  → Service
+  → Repository
+  → PostgreSQL
+  → Response
 ```
 
----
-
-## ⚡ Redis Caching
-
-Redis is used to cache frequently accessed product information.
-
-Example flow:
+**AI inventory request**
 
 ```text
-GET Product
-     |
-     v
-Check Redis
-   /     \
-Found    Not Found
- |          |
- v          v
-Return    PostgreSQL
-              |
-              v
-          Store in Redis
-              |
-              v
-          Return Product
+User Question
+  → AI Chat Controller
+  → Spring AI
+  → Ollama
+  → Java Tool
+  → Inventory / Product Service
+  → Database
+  → AI Response
 ```
 
-This reduces unnecessary database queries for frequently accessed data.
-
----
-
-## 📨 Kafka Event-Driven Architecture
-
-Apache Kafka is used for asynchronous event communication.
-
-Example:
+**Event-driven processing**
 
 ```text
-Product Created
-      |
-      v
-Kafka Producer
-      |
-      v
-product-created Topic
-      |
-      v
-Kafka Consumer
-      |
-      v
-Process Event
+Business Operation
+  → Kafka Producer
+  → Kafka Topic
+  → Kafka Consumer
+  → Event Processing
 ```
 
-The project also demonstrates:
+These flows illustrate the intended architecture. Exact call paths depend on the implementation of each controller, service, AI tool, and Kafka consumer.
 
-* Kafka producers
-* Kafka consumers
-* Consumer groups
-* JSON event serialization
-* Retry topic
-* Dead Letter Topic (DLT)
-* Asynchronous processing
 
----
+## 🗄️ Main Domain Modules
 
-## 🗄️ Database
-
-The project uses PostgreSQL.
-
-Main entities include:
-
-```text
-User
-Product
-Warehouse
-Inventory
-Order
-OrderItem
-```
-
-The application uses:
-
-* Spring Data JPA
-* Hibernate
-* Entity relationships
-* Transactions
-* Database constraints
-
----
+- **Product:** Product details, SKU, description, and price.
+- **Warehouse:** Warehouse information and identification.
+- **Inventory:** Stock quantities, reservations, and availability.
+- **Order:** Customer orders, order items, totals, and statuses.
+- **User:** User registration and authentication.
+- **AI Assistant:** Natural-language access to selected inventory operations.
 
 ## 🔄 Transaction Management
 
-Order creation uses Spring's transaction management.
-
-Example:
+Order processing uses Spring's transaction-management capabilities to help maintain consistency between order and inventory updates.
 
 ```java
 @Transactional
 public OrderResponse createOrder(...) {
-    // Validate product
-
-    // Check inventory
-
-    // Reserve stock
-
-    // Create order
-
-    // Save order
+    // Validate requested products
+    // Check stock availability
+    // Reserve inventory
+    // Create and save the order
+    // Return the order response
 }
 ```
 
-If an operation fails during the transaction, the database changes can be rolled back to maintain consistency.
+*Illustrative example; the actual method signature and implementation may differ.*
 
----
+## ⚙️ Getting Started
 
-## 📚 API Documentation
+### Prerequisites
 
-Swagger / OpenAPI is used to document and test REST APIs.
+Install and configure:
 
-After starting the application, open:
-
-```text
-http://localhost:8080/swagger-ui/index.html
-```
-
----
-
-## ▶️ How to Run the Project
+- JDK 21
+- Maven
+- PostgreSQL
+- Redis
+- Docker, where needed for Kafka infrastructure
+- Ollama for local AI integration
 
 ### 1. Clone the repository
 
 ```bash
 git clone https://github.com/Sapnnnaa/inventory-management-system.git
+cd inventory-management-system
 ```
 
-### 2. Open the project
+### 2. Configure PostgreSQL
 
-Open the project in IntelliJ IDEA.
-
-### 3. Configure PostgreSQL
-
-Create a PostgreSQL database:
+Create the database:
 
 ```sql
 CREATE DATABASE inventory_db;
 ```
 
-Configure your local database credentials.
-
-For security, do not commit real database passwords to GitHub.
-
-Example:
+Configure the database connection in `application.properties`:
 
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5432/inventory_db
@@ -414,107 +286,86 @@ spring.datasource.username=postgres
 spring.datasource.password=${DB_PASSWORD}
 ```
 
-Set `DB_PASSWORD` as an environment variable in your local environment or IntelliJ Run Configuration.
+Set `DB_PASSWORD` in your local environment or IntelliJ run configuration. Never commit real passwords or API secrets.
 
-### 4. Start Redis
+### 3. Start supporting services
 
-Make sure Redis is running on:
+Ensure PostgreSQL and Redis are running. Start Kafka using your local Docker configuration.
 
-```text
-localhost:6379
-```
-
-### 5. Start Kafka
-
-Make sure Kafka is running on:
+Default application connection addresses:
 
 ```text
-localhost:9092
+PostgreSQL: localhost:5432
+Redis:      localhost:6379
+Kafka:      localhost:9092
 ```
 
-Kafka can be run using Docker.
+### 4. Configure the AI model
 
-### 6. Run the application
-
-Using Maven:
+Install Ollama and obtain the model:
 
 ```bash
-mvn spring-boot:run
+ollama pull qwen2.5:7b
 ```
 
-Or run:
+Start the Ollama service and ensure the Spring AI Ollama configuration points to the correct local endpoint and model.
 
-```text
-InventoryManagementSystemApplication.java
+### 5. Run the application
+
+On Windows:
+
+```powershell
+.\mvnw.cmd spring-boot:run
 ```
 
-from IntelliJ IDEA.
+Alternatively, run `InventoryManagementSystemApplication.java` from IntelliJ IDEA.
 
----
+### 6. Open Swagger UI
 
-## 🧪 Testing
+After the application starts, visit:
 
-The APIs can be tested using:
+http://localhost:8080/swagger-ui/index.html
 
-* Swagger UI
-* Postman
-* Spring Boot tests
+Use the documented endpoints to explore and test the API.
 
-Example API endpoints:
+## 🧪 Example API Endpoints
 
-```text
-GET    /api/products
-POST   /api/products
-GET    /api/products/{id}
-PUT    /api/products/{id}
-DELETE /api/products/{id}
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/api/products` | Retrieve products |
+| POST | `/api/products` | Create a product |
+| GET | `/api/products/{id}` | Retrieve a product by ID |
+| PUT | `/api/products/{id}` | Update a product |
+| DELETE | `/api/products/{id}` | Delete a product |
+| POST | `/api/auth/register` | Register a user |
+| POST | `/api/auth/login` | Log in |
+| POST | `/api/ai/chat` | Interact with the AI assistant |
 
-POST   /api/auth/register
-POST   /api/auth/login
-```
+Exact request formats and available operations can be verified in Swagger UI.
 
----
+## 🎯 Engineering Concepts Demonstrated
 
-## 📌 Learning Objectives
+- Object-oriented programming and dependency injection
+- Layered application architecture
+- REST API design
+- Database relationships and constraints
+- Transaction management
+- Exception handling and validation
+- Caching
+- Event-driven architecture
+- Unit testing
+- Authentication and security
+- AI tool calling and integration with Java business logic
+- Local AI model deployment and integration
 
-This project was built to understand and practice real-world Java backend development concepts:
+## 🔮 Potential Improvements
 
-* Java and OOP
-* Spring Boot
-* REST API development
-* Layered architecture
-* Dependency Injection
-* Spring Data JPA
-* Hibernate
-* PostgreSQL
-* Transactions
-* Exception handling
-* Spring Security
-* JWT authentication
-* Redis caching
-* Apache Kafka
-* Event-driven architecture
-* Docker
-* API testing
-* Git and GitHub
-
----
-
-## 🔮 Future Improvements
-
-Possible future enhancements:
-
-* Role-based authorization
-* Pagination and advanced filtering
-* Optimistic/pessimistic locking improvements
-* Distributed tracing
-* Monitoring with Actuator and Prometheus
-* Centralized logging
-* CI/CD pipeline
-* Kubernetes deployment
-* Unit and integration test coverage
-
----
+- Expand automated unit and integration test coverage.
+- Add more AI tools for order analysis and operational insights.
+- Add conversation memory and retrieval-augmented generation (RAG).
+- Add application monitoring and centralized logging.
+- Implement CI/CD and production deployment.
+- Add more comprehensive security and authorization tests.
 
 ## 👩‍💻 Author
 
@@ -522,10 +373,8 @@ Possible future enhancements:
 
 Java Backend Developer
 
-GitHub: [Sapnnnaa](https://github.com/Sapnnnaa)
+GitHub: https://github.com/Sapnnnaa
 
----
+## 📌 Project Status
 
-## ⭐ Project Status
-
-🚧 This project is continuously being improved as part of my learning and practical backend development journey.
+An evolving backend project focused on learning and implementing practical Java backend engineering, event-driven systems, and AI integration.
