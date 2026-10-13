@@ -109,6 +109,32 @@ public class SecurityConfig {
                                 "/api/orders/**"
                         ).hasAnyRole("USER", "ADMIN")
 
+                        // Demand history
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/demand-history/**"
+                        ).hasAnyRole("USER", "ADMIN")
+
+                        // Demand forecasting
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/forecasts/**"
+                        ).hasAnyRole("USER", "ADMIN")
+
+                        // Smart replenishment
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/replenishment/**"
+                        ).hasAnyRole("USER", "ADMIN")
+
+                        // AI Chat
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/ai/chat"
+                        )
+                        .hasAnyRole("USER", "ADMIN")
+
+
                         // everything else
                         .anyRequest().authenticated()
                 )
