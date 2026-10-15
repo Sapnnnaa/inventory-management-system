@@ -6,14 +6,15 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
-import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
@@ -23,8 +24,14 @@ import java.util.Map;
 @Configuration
 public class KafkaConfig {
 
-    // PRODUCER CONFIGURATION
+    private final String bootstrapServers;
 
+    public KafkaConfig(
+            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
+        this.bootstrapServers = bootstrapServers;
+    }
+
+    // PRODUCER CONFIGURATION
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
 
@@ -32,7 +39,7 @@ public class KafkaConfig {
 
         config.put(
                 ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                "localhost:9092"
+                bootstrapServers
         );
 
         config.put(
@@ -50,13 +57,10 @@ public class KafkaConfig {
 
     @Bean
     public KafkaTemplate<String, Object> kafkaTemplate() {
-
         return new KafkaTemplate<>(producerFactory());
     }
 
-
     // PRODUCT CONSUMER
-
     @Bean
     public ConsumerFactory<String, ProductEvent> productConsumerFactory() {
 
@@ -69,7 +73,7 @@ public class KafkaConfig {
 
         config.put(
                 ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                "localhost:9092"
+                bootstrapServers
         );
 
         config.put(
@@ -82,6 +86,11 @@ public class KafkaConfig {
                 StringDeserializer.class
         );
 
+        config.put(
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                JsonDeserializer.class
+        );
+
         return new DefaultKafkaConsumerFactory<>(
                 config,
                 new StringDeserializer(),
@@ -89,26 +98,21 @@ public class KafkaConfig {
         );
     }
 
-
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, ProductEvent>
     productKafkaListenerContainerFactory() {
 
         ConcurrentKafkaListenerContainerFactory<String, ProductEvent>
-                factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
+                factory = new ConcurrentKafkaListenerContainerFactory<>();
 
         factory.setConsumerFactory(productConsumerFactory());
 
         return factory;
     }
 
-
     // ORDER CONSUMER
-
     @Bean
-    public ConsumerFactory<String, OrderCreatedEvent>
-    orderConsumerFactory() {
+    public ConsumerFactory<String, OrderCreatedEvent> orderConsumerFactory() {
 
         JsonDeserializer<OrderCreatedEvent> deserializer =
                 new JsonDeserializer<>(OrderCreatedEvent.class);
@@ -119,7 +123,7 @@ public class KafkaConfig {
 
         config.put(
                 ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                "localhost:9092"
+                bootstrapServers
         );
 
         config.put(
@@ -132,6 +136,11 @@ public class KafkaConfig {
                 StringDeserializer.class
         );
 
+        config.put(
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                JsonDeserializer.class
+        );
+
         return new DefaultKafkaConsumerFactory<>(
                 config,
                 new StringDeserializer(),
@@ -139,14 +148,12 @@ public class KafkaConfig {
         );
     }
 
-
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, OrderCreatedEvent>
     orderKafkaListenerContainerFactory() {
 
         ConcurrentKafkaListenerContainerFactory<String, OrderCreatedEvent>
-                factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
+                factory = new ConcurrentKafkaListenerContainerFactory<>();
 
         factory.setConsumerFactory(orderConsumerFactory());
 

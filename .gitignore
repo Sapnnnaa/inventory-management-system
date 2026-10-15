@@ -34,3 +34,11 @@ build/
 
 # Environment variables
 .env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Container backup files
+kafka-container-backup.json

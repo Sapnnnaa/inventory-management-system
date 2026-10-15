@@ -1,9 +1,12 @@
+
 package com.example.inventory.config;
 
-
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,18 +16,33 @@ public class OpenAPIConfig {
     @Bean
     public OpenAPI inventoryOpenAPI() {
 
+        final String securitySchemeName = "bearerAuth";
+
         return new OpenAPI()
                 .info(new Info()
                         .title("Inventory & Order Management System API")
                         .description(
-                                "REST APIs for managing products, warehouses, "+
-                                "inventory, stock, and customer orders."
+                                "REST APIs for managing products, warehouses, " +
+                                        "inventory, stock, and customer orders."
                         )
                         .version("1.0.0")
                         .contact(new Contact()
                                 .name("Sapna")
                                 .email("sapna9082000@gmail.com")
                         )
+                )
+                .components(new Components()
+                        .addSecuritySchemes(
+                                securitySchemeName,
+                                new SecurityScheme()
+                                        .type(SecurityScheme.Type.HTTP)
+                                        .scheme("bearer")
+                                        .bearerFormat("JWT")
+                        )
+                )
+                .addSecurityItem(
+                        new SecurityRequirement()
+                                .addList(securitySchemeName)
                 );
     }
 }
